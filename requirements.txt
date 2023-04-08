@@ -1,0 +1,2 @@
+selenium
+undetected_chromedriver
