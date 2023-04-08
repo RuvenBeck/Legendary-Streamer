@@ -3,49 +3,118 @@ import time
 import selenium
 import undetected_chromedriver as uc
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC, wait
 from seleniumwire import webdriver
-import pickle
+import threading
+from selenium import webdriver
+import queue
 
-#Combo line wird ausgegeben und anschließend in Password und Email unterteilt. Dies wird dann in die Eingabe später übergeben
-with open('C:/Coding/Python/Music-Streaming/combo.txt', 'r') as combopick:
+count = 0
+
+with open('C:/Coding/Python/Music-Streaming/proxies.txt', 'r') as f:
+    proxies = f.read().splitlines()
+chrome_options = Options()
+chrome_options.add_argument('--proxy-server=%s' % proxies[0])
+chrome_options.add_argument('--start-maximized')
+
+with open('C:/Coding/Python/Music-Streaming/Playlist.txt', 'r') as p:
+    playlist_urls = p.readlines()
+
+
+
+def worker(q, chrome_options):
+    while True:
+        line = q.get()
+        if line is None:
+            break
+        parts = line.split(":", 1)
+        email = parts[0]
+        password = parts[1].strip()
+        print("Email:", email, "Password:", password)
+        # Hier können weitere Aktionen mit der E-Mail und dem Passwort durchgeführt werden
+
+        driver = webdriver.Chrome(options=chrome_options)
+        driver.get('https://accounts.spotify.com/de/login?continue=https%3A%2F%2Fopen.spotify.com%2F__noul__%3Fl2l%3D1%26nd%3D1&_locale=de-DE')
+        #driver.maximize_window()
+        WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.ID, 'login-username'))).send_keys(email)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'login-password'))).send_keys(password)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID,'login-button'))).click()
+
+        time.sleep(5)
+
+        #PopUps entfernen
+        try:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler'))).click()
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[15]/div/div/div/div[2]/button[2]'))).click()
+
+        except:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[15]/div/div/div/div[2]/button[2]'))).click()
+
+
+        #Auf die Playlist drücken
+        try:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'AINMAUImkAYJd4ertQxy'))).click()
+
+        #Die Playlist manuel suchen
+        except:    
+            playlist_url = random.choice(playlist_urls)        
+            driver.get(playlist_url)
+        
+        #Play
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div/div/div[2]/main/div[1]/section/div[2]/div[2]/div[4]/div/div/div/div/div/button/span'))).click()
+
+        #Loop und Shuffle an machen
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Vz6yjzttS0YlLcwrkoUR'))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "KVKoQ3u4JpKTvSSFtd6J"))).click()
+        count = 0
     
-    zeile = combopick.readline()
-    
-random_line = random.choice(zeile)
+        while True:
+            count += 1
 
-print(random_line)
-
-
-with open('C:\Coding\Python\Music-Streaming\combos.txt', 'r') as d:
-     
-    zeile = d.readline()
-    wortliste = zeile.split(":")
-    if len(wortliste) > 1:
-        password = wortliste[1].strip()
-        print(password)
-    else: 
-        print("Ich konnte kein Password erkennen")
-
-username = f 
-password = d
-
-driver = uc.Chrome()
-
-driver.get('https://accounts.spotify.com/de/login?continue=https%3A%2F%2Fopen.spotify.com%2F__noul__%3Fl2l%3D1%26nd%3D1&_locale=de-DE')
-driver.maximize_window()
-time.sleep(1000)
-driver.find_element(By.ID, 'login-username').send_keys(username)
-time.sleep(2)
-driver.find_element(By.ID, 'login-password').send_keys(password)
-driver.find_element(By.ID,'login-button').click()
-time.sleep(10)
-#skip = time.sleep(random.randint(33, 100))
+            driver.find_element(By.CLASS_NAME, 'mnipjT4SLDMgwiDCEnRC').click()
 
 
-#cookies = driver.get_cookies()
-#pickle.dump(cookies, open("cookies.pkl", "wb"))
+            print(f"Die Songs wurden {count} mal gestreamt!")
+
+            if count == 400:
+                driver.quit()
+                break
+
+            start_time = time.time()
+
+            time.sleep(35 + 35 *random.random())
+
+            end_time = time.time()
+            duration = end_time - start_time
+
+            print(f"Der Song wurde {duration} Sekunden gespielt.")
+        q.task_done()
+
+q = queue.Queue()
+
+# Zeilen aus der Textdatei in die Queue einfügen
+with open('C:/Coding/Python/Music-Streaming/combo.txt', 'r') as file:
+    lines = file.readlines()
+    for line in lines:
+        q.put(line)
+
+# Threads erstellen
+threads = []
+for i in range(8):
+    t = threading.Thread(target=worker, args=(q, chrome_options))
+    t.start()
+    threads.append(t)
+
+# Warten, bis alle Zeilen abgearbeitet sind
+q.join()
+
+# Alle Threads beenden
+for i in range(8):
+    q.put(None)
+for t in threads:
+    t.join()
