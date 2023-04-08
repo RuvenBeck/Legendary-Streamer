@@ -16,13 +16,13 @@ import queue
 
 count = 0
 
-with open('C:/Coding/Python/Music-Streaming/proxies.txt', 'r') as f:
+with open('proxies.txt', 'r') as f:
     proxies = f.read().splitlines()
 chrome_options = Options()
 chrome_options.add_argument('--proxy-server=%s' % proxies[0])
 chrome_options.add_argument('--start-maximized')
 
-with open('C:/Coding/Python/Music-Streaming/Playlist.txt', 'r') as p:
+with open('Playlist.txt', 'r') as p:
     playlist_urls = p.readlines()
 
 
@@ -98,7 +98,7 @@ def worker(q, chrome_options):
 q = queue.Queue()
 
 # Zeilen aus der Textdatei in die Queue einfügen
-with open('C:/Coding/Python/Music-Streaming/combo.txt', 'r') as file:
+with open('combo.txt', 'r') as file:
     lines = file.readlines()
     for line in lines:
         q.put(line)
