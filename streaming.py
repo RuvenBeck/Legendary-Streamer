@@ -27,14 +27,14 @@ print(rf"""{Fore.RED}                                                      v1
 lock = threading.Lock()
 
 
-with open('C:/Coding/Python/Music-Streaming/proxies.txt', 'r') as f:
+with open('proxies.txt', 'r') as f:
     proxies = f.read().splitlines()
 chrome_options = Options()
 chrome_options.add_argument('--proxy-server=%s' % proxies[0])
 chrome_options.add_argument('--disable-webrtc')
 chrome_options.add_argument('--start-maximized')
 
-with open('C:/Coding/Python/Music-Streaming/Playlist.txt', 'r') as p:
+with open('Playlist.txt', 'r') as p:
     playlist_urls = p.readlines()
 
 
