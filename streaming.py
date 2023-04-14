@@ -27,14 +27,14 @@ print(rf"""{Fore.RED}                                                      v1
 lock = threading.Lock()
 
 
-with open('proxies.txt', 'r') as f:
+with open('C:/Coding/Python/Music-Streaming/proxies.txt', 'r') as f:
     proxies = f.read().splitlines()
 chrome_options = Options()
 chrome_options.add_argument('--proxy-server=%s' % proxies[0])
 chrome_options.add_argument('--disable-webrtc')
 chrome_options.add_argument('--start-maximized')
 
-with open('Playlist.txt', 'r') as p:
+with open('C:/Coding/Python/Music-Streaming/Playlist.txt', 'r') as p:
     playlist_urls = p.readlines()
 
 
@@ -61,29 +61,44 @@ def worker(q, chrome_options,):
 
         #PopUps entfernen
         try:
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler'))).click()
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[15]/div/div/div/div[2]/button[2]'))).click()
+            WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler'))).click()
+            WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[15]/div/div/div/div[2]/button[2]'))).click()
 
         except:
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[15]/div/div/div/div[2]/button[2]'))).click()
+            pass
 
-
-        #Auf die Playlist drücken
         try:
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'AINMAUImkAYJd4ertQxy'))).click()
+            WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler'))).click()
+
+        except:
+            pass
+
+        try:
+            WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[15]/div/div/div/div[2]/button[2]'))).click()
+
+        except: 
+            pass
+
+        #Die Playlist versuchen an zu wählen
+        try:
+            WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CLASS_NAME, 'AINMAUImkAYJd4ertQxy'))).click()
 
         #Die Playlist manuel suchen
         except:    
             playlist_url = random.choice(playlist_urls)        
             driver.get(playlist_url)
-        
+
+        try:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Button-sc-qlcn5g-0 jqMzOG'))).click()
+        except:
+            pass
 
         #Loop und Shuffle an machen
-        loopactive = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Vz6yjzttS0YlLcwrkoUR')))
-        shuffleactive = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'KVKoQ3u4JpKTvSSFtd6J')))
+        loopactive = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Vz6yjzttS0YlLcwrkoUR')))
+        shuffleactive = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CLASS_NAME, 'KVKoQ3u4JpKTvSSFtd6J')))
 
         if loopactive.get_attribute("aria-checked") == "true":
-            print("Loop Bereits aktiviert")
+            print("Loop was set")
         else:
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Vz6yjzttS0YlLcwrkoUR'))).click()
 
@@ -91,13 +106,13 @@ def worker(q, chrome_options,):
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Vz6yjzttS0YlLcwrkoUR'))).click()
             time.sleep(0.5)
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'Vz6yjzttS0YlLcwrkoUR'))).click()
-            print("Dauerhafter-Loop auf Loop gestellt.")
+            print("Permanent loop to loop.")
 
         else:
-            print("Alles bereits richtig")
+            pass
 
         if shuffleactive.get_attribute("aria-checked") == "true":
-            print("Shuffle bereits aktiviert")
+            print("Shuffle already active")
         else:
             WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'KVKoQ3u4JpKTvSSFtd6J'))).click()
 
@@ -107,10 +122,10 @@ def worker(q, chrome_options,):
             count += 1
 
 
-            driver.find_element(By.CLASS_NAME, 'mnipjT4SLDMgwiDCEnRC').click()
+            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.CLASS_NAME, 'mnipjT4SLDMgwiDCEnRC'))).click()
 
 
-            print(f"Die Songs wurden {count} mal gestreamt!")
+            print(f"The song was {count} time streamed!")
 
             if count == 1000:
                 driver.quit()
@@ -123,7 +138,7 @@ def worker(q, chrome_options,):
             end_time = time.time()
             duration = end_time - start_time
 
-            print(f"Der Song wurde {duration} Sekunden gespielt.")
+            print(f"The song was played {duration} seconds.")
         q.task_done()
 
 
@@ -143,16 +158,17 @@ anzahl_threads = anzahl_zeilen
 
 # Threads erstellen
 threads = []
-for i in range(anzahl_threads):
+for i in range(15):
     t = threading.Thread(target=worker, args=(q, chrome_options))
-    t.start()
     threads.append(t)
+    t.start()
+    time.sleep(8)
 
 # Warten, bis alle Zeilen abgearbeitet sind
 q.join()
 
 # Alle Threads beenden
-for i in range(anzahl_threads):
+for i in range(15):
     q.put(None)
 for t in threads:
     t.join()
