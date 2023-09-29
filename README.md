@@ -1,3 +1,6 @@
+!!Will be update in the next month!!
+
+
 # Legendary-Streamer
 OpenSource Spotify Streaming Bot 
 
